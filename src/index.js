@@ -5,12 +5,10 @@ const app = express();
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.json({ service: "matching-service", status: "running" });
+  res.json({ service: "matching-service", status: "running", eventDriven: true });
 });
 
-app.post("/match", async (req, res) => {
-  const item = req.body;
-
+async function processMatch(item) {
   const matchResult = {
     possibleMatch: true,
     confidence: "medium",
@@ -24,10 +22,30 @@ app.post("/match", async (req, res) => {
     body: JSON.stringify(matchResult)
   });
 
-  res.json({
-    message: "Matching completed",
-    result: matchResult
-  });
+  return matchResult;
+}
+
+app.post("/match", async (req, res) => {
+  const result = await processMatch(req.body);
+  res.json({ message: "Matching completed using REST", result });
+});
+
+app.post("/events/item-created", async (req, res) => {
+  try {
+    const pubsubMessage = req.body.message;
+
+    const data = Buffer.from(pubsubMessage.data, "base64").toString();
+    const item = JSON.parse(data);
+
+    const result = await processMatch(item);
+
+    console.log("Processed Pub/Sub item-created event:", result);
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("Failed to process Pub/Sub event:", error);
+    res.status(500).send("Failed to process event");
+  }
 });
 
 const PORT = process.env.PORT || 8080;

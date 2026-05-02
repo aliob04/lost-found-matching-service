@@ -26,5 +26,6 @@ jobs:
             --source . \
             --region us-central1 \
             --allow-unauthenticated \
-            --set-env-vars NOTIFICATION_URL=https://notification-service-512993707354.us-central1.run.app \
+            --add-cloudsql-instances swe455hw2:us-central1:lost-found-postgres \
+            --set-env-vars NOTIFICATION_URL=https://notification-service-512993707354.us-central1.run.app,DATABASE_URL='postgresql://lostfounduser:LostFound12345!@/lostfound?host=/cloudsql/swe455hw2:us-central1:lost-found-postgres' \
             --quiet
